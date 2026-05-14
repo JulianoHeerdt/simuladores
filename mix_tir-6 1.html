@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Simulador TIR — Consórcio + Capital de Giro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+/* ══════════════════════════════════════════════════════════
+   VISUAL SYSTEM
+   ══════════════════════════════════════════════════════════ */
+:root{
+  --bb-navy:      #002F6C;
+  --bb-navy-d:    #001F4A;
+  --bb-navy-l:    #1A4D8F;
+  --bb-yellow:    #F7C702;
+  --bb-yellow-d:  #D4A900;
+  --bb-blue-mid:  #0050A0;
+  --acc-c:        #0092D4;
+  --acc-c-bg:     #E8F4FB;
+  --acc-c-bdr:    #B3D9F2;
+  --acc-g:        #006B3E;
+  --acc-g-bg:     #E6F4EE;
+  --acc-g-bdr:    #99CCBB;
+  --white:        #FFFFFF;
+  --gray-50:      #F5F6F8;
+  --gray-100:     #EAECF0;
+  --gray-200:     #D1D5DC;
+  --gray-300:     #9AA3B0;
+  --gray-500:     #6B7280;
+  --gray-700:     #374151;
+  --gray-900:     #111827;
+  --danger:       #C0392B;
+  --danger-bg:    #FDECEA;
+  --success:      #006B3E;
+  --font:        'Source Sans 3', 'Segoe UI', Arial, sans-serif;
+  --mono:        'Source Code Pro', 'Courier New', monospace;
+  --r-sm:  4px;
+  --r-md:  8px;
+  --r-lg:  12px;
+  --r-xl:  16px;
+  --sh-sm:  0 1px 3px rgba(0,47,108,.08), 0 1px 2px rgba(0,47,108,.06);
+  --sh-md:  0 4px 12px rgba(0,47,108,.12), 0 2px 4px rgba(0,47,108,.08);
+  --sh-lg:  0 8px 24px rgba(0,47,108,.16), 0 4px 8px rgba(0,47,108,.10);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:17px;background:var(--gray-50);color:var(--gray-900);font-family:var(--font);-webkit-font-smoothing:antialiased}
+body{min-height:100vh}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--gray-100)}
+::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--bb-navy-l)}
+
+.app{display:grid;grid-template-rows:auto auto 1fr;min-height:100vh}
+
+.topbar{
+  background:var(--bb-navy-d);
+  padding:5px 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+}
+.topbar-left{display:flex;align-items:center;gap:20px;}
+.topbar span{font-size:.72rem;color:rgba(255,255,255,.55);letter-spacing:.02em}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+
+header{
+  background:var(--bb-navy);
+  padding:0 28px;
+  display:flex;align-items:center;gap:0;
+  height:64px;
+  box-shadow:var(--sh-md);
+  position:sticky;top:0;z-index:200;
+}
+.header-logo{
+  display:flex;align-items:center;gap:12px;
+  padding-right:28px;border-right:1px solid rgba(255,255,255,.2);
+  margin-right:28px;
+}
+.logo-mark{
+  width:42px;height:42px;background:var(--bb-yellow);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;font-weight:700;color:var(--bb-navy);letter-spacing:-.03em;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+.logo-text{color:var(--white);font-size:1.05rem;font-weight:600;letter-spacing:-.01em;line-height:1.2}
+.logo-text small{display:block;font-size:.7rem;font-weight:300;color:rgba(255,255,255,.65);letter-spacing:.04em;text-transform:uppercase}
+.header-nav{display:flex;align-items:center;gap:4px;flex:1}
+.nav-item{
+  color:rgba(255,255,255,.75);font-size:.88rem;padding:8px 14px;
+  border-radius:var(--r-sm);cursor:pointer;transition:all .15s;white-space:nowrap;
+  border:none;background:none;font-family:var(--font);
+}
+.nav-item:hover{background:rgba(255,255,255,.12);color:var(--white)}
+.nav-item.active{background:rgba(247,199,2,.18);color:var(--bb-yellow);font-weight:600}
+.header-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+
+.main{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 104px)}
+
+.sidebar{
+  background: #e8f4fb;
+  border-right:1px solid var(--gray-200);
+  overflow-y:auto;
+  display:flex;flex-direction:column;
+  margin-right: 10px
+}
+.sidebar::-webkit-scrollbar{width:4px}
+
+.sb-section{border-bottom:1px solid var(--gray-100);padding:18px 20px}
+.sb-section:last-child{border-bottom:none}
+
+.sb-title{
+  display:flex;align-items:center;gap:8px;
+  font-size:.72rem;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--gray-500);margin-bottom:14px;
+}
+.sb-title-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-cons{background:var(--acc-c)}
+.dot-giro{background:var(--acc-g)}
+.dot-res {background:var(--bb-yellow)}
+
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field label{
+  display:block;font-size:.78rem;font-weight:600;
+  color:var(--gray-700);margin-bottom:5px;
+}
+.field-note{font-size:.72rem;color:var(--gray-500);margin-top:4px;font-style:italic}
+
+.input-wrap{position:relative;display:flex;align-items:center}
+.input-prefix{
+  position:absolute;left:10px;font-size:.82rem;color:var(--gray-500);
+  font-weight:600;pointer-events:none;z-index:1;
+}
+input[type=number],input[type=date],input[type=text]{
+  width:100%;padding:9px 10px;
+  border:1.5px solid var(--gray-200);border-radius:var(--r-sm);
+  font-family:var(--font);font-size:.9rem;color:var(--gray-900);
+  background:var(--white);outline:none;transition:border-color .15s,box-shadow .15s;
+  -moz-appearance:textfield;
+}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+input:focus{border-color:var(--bb-blue-mid);box-shadow:0 0 0 3px rgba(0,80,160,.12)}
+input.cons-inp:focus{border-color:var(--acc-c);box-shadow:0 0 0 3px rgba(0,146,212,.12)}
+input.giro-inp:focus{border-color:var(--acc-g);box-shadow:0 0 0 3px rgba(0,107,62,.12)}
+
+.input-currency input{padding-left:30px}
+
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+.divider-section{height:1px;background:var(--gray-100);margin:14px 0}
+
+/* NOVA BARRA DE RESULTADOS */
+.results-bar {
+  display: none; /* oculta até ambos importados */
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  align-items: stretch;
+}
+.results-bar.visible {
+  display: flex;
+}
+
+.rc.horizontal {
+  flex: 1 1 auto;
+  min-width: 140px;
+  background: var(--gray-50);
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  transition: border-color .2s;
+}
+.rc.horizontal.highlight {
+  background: linear-gradient(135deg, #FFF9E0, #FFFBF0);
+  border-color: var(--bb-yellow);
+}
+.rc.horizontal.cons-card {
+  background: var(--acc-c-bg);
+  border-color: var(--acc-c-bdr);
+}
+.rc.horizontal.giro-card {
+  background: var(--acc-g-bg);
+  border-color: var(--acc-g-bdr);
+}
+
+.font {
+  color: #fc7701;
+  font-weight: 900
+}
+.rc.horizontal .rc-val {
+  font-size: 1rem;
+}
+.rc.horizontal.highlight .rc-val {
+  font-size: 1.1rem;
+}
+
+.table-area{display:flex;flex-direction:column;background:var(--gray-50);overflow:hidden}
+
+.toolbar{
+  background:var(--white);border-bottom:1px solid var(--gray-200);
+  padding:10px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  box-shadow:var(--sh-sm);
+}
+.toolbar-sep{width:1px;height:22px;background:var(--gray-200);margin:0 2px}
+.toolbar-lbl{font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-500);margin-right:4px}
+
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:var(--r-sm);border:1.5px solid transparent;
+  font-family:var(--font);font-size:.82rem;font-weight:600;cursor:pointer;
+  transition:all .15s;white-space:nowrap;text-decoration:none;
+}
+.btn-ghost{background:var(--white);border-color:var(--gray-200);color:var(--gray-700)}
+.btn-ghost:hover{background:var(--gray-50);border-color:var(--gray-300);color:var(--gray-900)}
+.btn-primary{background:var(--bb-navy);border-color:var(--bb-navy);color:var(--white)}
+.btn-primary:hover{background:var(--bb-navy-d)}
+.btn-yellow{background:var(--bb-yellow);border-color:var(--bb-yellow);color:var(--bb-navy)}
+.btn-yellow:hover{background:var(--bb-yellow-d);border-color:var(--bb-yellow-d)}
+.btn-cons{background:var(--acc-c-bg);border-color:var(--acc-c-bdr);color:var(--acc-c)}
+.btn-cons:hover{background:#D0EAF8;border-color:var(--acc-c)}
+.btn-giro{background:var(--acc-g-bg);border-color:var(--acc-g-bdr);color:var(--acc-g)}
+.btn-giro:hover{background:#CCE9DC;border-color:var(--acc-g)}
+.btn-danger{background:var(--danger-bg);border-color:#F5C6C2;color:var(--danger)}
+.btn-danger:hover{background:#FBDBD8}
+.btn-sm{padding:5px 10px;font-size:.78rem}
+.ml-auto{margin-left:auto}
+
+.table-wrap{flex:1;overflow:auto}
+table{border-collapse:collapse;width:max-content;min-width:100%;font-size:.82rem}
+thead{position:sticky;top:0;z-index:10}
+
+.th-group{
+  padding:7px 12px;font-size:.68rem;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;text-align:center;
+  border-bottom:2px solid var(--gray-200);
+}
+.th-period{background:var(--gray-100);color:var(--gray-500)}
+.th-cons  {/* mantido para referência, mas não usado */background:#D5EAF7;color:var(--acc-c)}
+.th-giro  {/* mantido para referência, mas não usado */background:#D0E8DA;color:var(--acc-g)}
+.th-comb  {background:var(--bb-navy-d);color:var(--bb-yellow)}
+
+th.sub{
+  padding:7px 11px;font-size:.72rem;font-weight:700;
+  color:var(--gray-700);text-align:right;white-space:nowrap;
+  border-bottom:2px solid var(--gray-300);background:var(--gray-50);
+}
+th.sub:first-child,th.sub.center{text-align:center}
+th.sub.period-h{background:var(--gray-100);color:var(--gray-500)}
+th.sub.cons-h  {background:var(--bb-navy-l);color:var(--white)}
+th.sub.giro-h  {background:var(--bb-navy-l);color:var(--white)}
+th.sub.comb-h  {background:var(--bb-navy);color:var(--bb-yellow)}
+
+tbody tr:nth-child(even) td{background:#FAFBFC}
+tbody tr:hover td{background:#EEF4FB!important}
+
+td{
+  padding:0;border-bottom:1px solid var(--gray-100);
+  font-family:var(--font);font-size:.82rem;color:var(--gray-900);
+  white-space:nowrap;
+}
+td.center{text-align:center}
+td.right{text-align:right;padding:7px 11px}
+td.period-c{background:var(--gray-50)!important;color:var(--gray-500);text-align:center;padding:7px 10px}
+td.cons-c  {background:#F5FAFD!important}
+td.giro-c  {background:#F4FAF6!important}
+td.comb-c  {background:var(--bb-navy)!important;font-weight:700;color:var(--white)}
+td.exp-c   {background:#FFF8E1!important;color:#8B6800}
+td.zero    {color:var(--gray-300)!important;font-weight:400!important}
+td.comb-c.zero{color:rgba(255,255,255,.25)!important}
+
+td.editable{background:var(--bb-navy)!important}
+td.editable input{
+  width:100%;border:none;outline:none;background:transparent;
+  font-family:var(--font);font-size:.82rem;color:var(--bb-yellow);
+  font-weight:600;text-align:right;padding:7px 11px;cursor:text;
+  transition:background .1s;
+}
+td.editable input:focus{background:rgba(255,255,255,.07)}
+td.editable input::placeholder{color:rgba(255,255,255,.3)}
+td.editable.giro-inp{background:var(--bb-navy)!important}
+td.editable.giro-inp input{color:#7ED9A8}
+tr.lance-row td{background:#FFFAE0!important}
+tr.lance-row td.editable{background:var(--bb-navy-d)!important}
+tr.lance-row td.comb-c{background:#1A4D8F!important;color:var(--white)!important}
+tr.lance-row td.cons-c{background:#FFF6CC!important}
+
+tr.total-row td{
+  background:var(--bb-navy)!important;color:var(--white)!important;
+  font-weight:700;font-size:.84rem;padding:9px 11px;
+  position:sticky;bottom:0;
+}
+tr.total-row td.center{text-align:center}
+
+.overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,47,108,.45);
+  z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(3px);
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--white);border-radius:var(--r-xl);
+  width:min(720px,95vw);max-height:88vh;
+  display:flex;flex-direction:column;
+  box-shadow:var(--sh-lg);overflow:hidden;
+}
+.modal-sm{width:min(480px,95vw)}
+.modal-head{
+  background:var(--bb-navy);padding:16px 22px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.modal-head h3{color:var(--white);font-size:1rem;font-weight:600}
+.modal-head h3 em{color:var(--bb-yellow);font-style:normal}
+.modal-close{
+  background:rgba(255,255,255,.15);border:none;color:var(--white);
+  width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.9rem;
+  display:flex;align-items:center;justify-content:center;transition:background .15s;
+}
+.modal-close:hover{background:rgba(255,255,255,.3)}
+.modal-body{padding:22px 24px;overflow-y:auto;flex:1}
+.modal-foot{
+  padding:14px 24px;border-top:1px solid var(--gray-200);
+  display:flex;gap:8px;justify-content:flex-end;background:var(--gray-50);
+  flex-shrink:0;
+}
+
+.tab-bar{display:flex;gap:0;border-bottom:2px solid var(--gray-200);margin-bottom:18px}
+.tab-btn{
+  padding:9px 20px;font-family:var(--font);font-size:.84rem;font-weight:600;
+  background:none;border:none;color:var(--gray-500);cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;
+}
+.tab-btn.active{color:var(--bb-navy);border-bottom-color:var(--bb-navy)}
+.tab-btn:hover:not(.active){color:var(--gray-700)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+.drop-zone{
+  border:2px dashed var(--gray-300);border-radius:var(--r-lg);
+  padding:32px 24px;text-align:center;cursor:pointer;transition:all .2s;
+  background:var(--gray-50);
+}
+.drop-zone:hover,.drop-zone.drag-over{
+  border-color:var(--bb-blue-mid);background:#EFF5FF;
+}
+.dz-icon{font-size:2rem;margin-bottom:8px}
+.drop-zone p{font-size:.88rem;color:var(--gray-700);font-weight:600}
+.drop-zone .dz-sub{font-size:.76rem;color:var(--gray-500);margin-top:4px}
+
+.ta-import{
+  width:100%;min-height:140px;border:1.5px solid var(--gray-200);
+  border-radius:var(--r-md);padding:12px;font-family:var(--mono);
+  font-size:.8rem;color:var(--gray-900);background:var(--gray-50);
+  resize:vertical;outline:none;line-height:1.7;transition:border-color .15s;
+}
+.ta-import:focus{border-color:var(--bb-blue-mid);box-shadow:0 0 0 3px rgba(0,80,160,.1)}
+.ta-import::placeholder{color:var(--gray-300);font-style:italic}
+.ta-hint{font-size:.74rem;color:var(--gray-500);margin-top:8px;line-height:1.7}
+.ta-hint code{
+  background:var(--gray-100);padding:1px 6px;border-radius:3px;
+  font-family:var(--mono);font-size:.78rem;color:var(--bb-navy);
+}
+
+.col-selector{margin-top:16px}
+.col-selector > label{font-size:.78rem;font-weight:600;color:var(--gray-700);display:block;margin-bottom:8px}
+.col-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.col-chip{
+  padding:5px 14px;border-radius:20px;border:1.5px solid var(--gray-200);
+  background:var(--white);font-size:.78rem;font-weight:600;
+  cursor:pointer;color:var(--gray-700);transition:all .15s;
+}
+.col-chip:hover{border-color:var(--bb-blue-mid);color:var(--bb-blue-mid)}
+.col-chip.selected{
+  background:var(--bb-navy);border-color:var(--bb-navy);color:var(--white);
+}
+
+.preview-wrap{
+  margin-top:14px;border:1px solid var(--gray-200);border-radius:var(--r-md);
+  overflow:auto;max-height:180px;
+}
+.preview-wrap table{min-width:100%;font-size:.78rem}
+.preview-wrap th{
+  background:var(--gray-100);padding:5px 10px;font-size:.72rem;
+  font-weight:700;color:var(--gray-700);text-align:left;
+  position:sticky;top:0;white-space:nowrap;
+}
+.preview-wrap td{
+  padding:5px 10px;border-bottom:1px solid var(--gray-100);
+  text-align:left;background:var(--white);
+}
+.preview-wrap th.sel-col{color:var(--bb-blue-mid)}
+.preview-wrap td.sel-col{color:var(--bb-navy);font-weight:600}
+
+.status-msg{
+  margin-top:10px;padding:9px 13px;border-radius:var(--r-sm);
+  font-size:.8rem;font-weight:600;
+}
+.st-info{background:#EFF5FF;color:var(--bb-blue-mid);border:1px solid #B3CFF5}
+.st-warn{background:#FFF8E0;color:#8B6800;border:1px solid #FFE480}
+.st-err {background:var(--danger-bg);color:var(--danger);border:1px solid #F5C6C2}
+.st-ok  {background:var(--acc-g-bg);color:var(--acc-g);border:1px solid var(--acc-g-bdr)}
+
+.parsed-fields{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;
+}
+.pf-item{
+  background:var(--gray-50);border:1px solid var(--gray-200);
+  border-radius:var(--r-sm);padding:10px 12px;
+}
+.pf-lbl{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-500);margin-bottom:4px}
+.pf-val{font-size:.95rem;font-weight:700;color:var(--bb-navy)}
+.pf-item.found{border-color:var(--acc-c-bdr);background:var(--acc-c-bg)}
+.pf-item.found .pf-val{color:var(--acc-c)}
+.pf-item.missing .pf-val{color:var(--gray-300)}
+
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--gray-200);
+  border-top-color:var(--bb-blue-mid);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+input[type=file]{display:none}
+
+.badge{
+  display:inline-flex;align-items:center;
+  font-size:.68rem;font-weight:700;letter-spacing:.04em;
+  padding:2px 9px;border-radius:12px;
+}
+.badge-cons{background:var(--acc-c-bg);color:var(--acc-c);border:1px solid var(--acc-c-bdr)}
+.badge-giro{background:var(--acc-g-bg);color:var(--acc-g);border:1px solid var(--acc-g-bdr)}
+.badge-yellow{background:#FFF3CC;color:#8B6800;border:1px solid #FFE480}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══ TOPBAR ═══════════════════════════════════════════ -->
+<div class="topbar">
+  <div class="topbar-left">
+    <span>Simulador de Taxa Interna de Retorno</span>
+  </div>
+  <div class="topbar-right">
+    <span id="topbarN">Períodos: <strong>60</strong></span>
+    <span>v4.0</span>
+  </div>
+</div>
+
+<!-- ══ HEADER ═══════════════════════════════════════════ -->
+<header>
+  <div class="header-logo">
+    <div class="logo-mark">TIR</div>
+    <div class="logo-text">
+      Simulador TIR
+      <small>Consórcio + Capital de Giro</small>
+    </div>
+  </div>
+  <nav class="header-nav">
+  </nav>
+</header>
+
+<!-- ══ MAIN ═════════════════════════════════════════════ -->
+<div class="main">
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════ -->
+<aside class="sidebar">
+
+  <!-- CONSÓRCIO -->
+  <div class="sb-section">
+    <div class="sb-title">
+      <div class="sb-title-dot dot-cons"></div>
+      Consórcio
+    </div>
+
+    <div class="field">
+      <label>Capital contratado</label>
+      <div class="input-wrap input-currency">
+        <span class="input-prefix">R$</span>
+        <input type="text" id="cons_capital" class="cons-inp currency-input" value="200.000,00"
+          oninput="onCurrencyInput(this)" onblur="onCurrencyBlur(this,'cons_capital_raw')" data-raw-id="cons_capital_raw"/>
+        <input type="hidden" id="cons_capital_raw" value="200000"/>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Data de início</label>
+        <input type="date" id="cons_data" value="" oninput="recalc()" class="cons-inp"/>
+      </div>
+      <div class="field">
+        <label>Prazo (meses)</label>
+        <input type="number" id="cons_meses" value="60" min="1" max="999" oninput="recalc()" class="cons-inp"/>
+      </div>
+    </div>
+
+    <div class="divider-section"></div>
+
+    <div class="field">
+      <label>Parcela até o lance</label>
+      <div class="input-wrap input-currency">
+        <span class="input-prefix">R$</span>
+        <input type="text" id="cons_parc_antes" class="cons-inp currency-input" value="3.333,33"
+          oninput="onCurrencyInput(this)" onblur="onCurrencyBlur(this,'cons_parc_antes_raw')" data-raw-id="cons_parc_antes_raw"/>
+        <input type="hidden" id="cons_parc_antes_raw" value="3333.33"/>
+      </div>
+      <div class="field-note">Valor mensal antes do lance</div>
+    </div>
+    <div class="field">
+      <label>Parcela após o lance</label>
+      <div class="input-wrap input-currency">
+        <span class="input-prefix">R$</span>
+        <input type="text" id="cons_parc_depois" class="cons-inp currency-input" value="2.500,00"
+          oninput="onCurrencyInput(this)" onblur="onCurrencyBlur(this,'cons_parc_depois_raw')" data-raw-id="cons_parc_depois_raw"/>
+        <input type="hidden" id="cons_parc_depois_raw" value="2500"/>
+      </div>
+      <div class="field-note">Valor mensal após o lance</div>
+    </div>
+
+    <div class="divider-section"></div>
+
+    <div class="field">
+      <label>Valor do lance</label>
+      <div class="input-wrap input-currency">
+        <span class="input-prefix">R$</span>
+        <input type="text" id="cons_lance_valor" class="cons-inp currency-input" value="60.000,00"
+          oninput="onCurrencyInput(this)" onblur="onCurrencyBlur(this,'cons_lance_valor_raw')" data-raw-id="cons_lance_valor_raw"/>
+        <input type="hidden" id="cons_lance_valor_raw" value="60000"/>
+      </div>
+    </div>
+    <div class="field">
+      <label>Mês de pagamento do lance (nº)</label>
+      <input type="number" id="cons_lance_mes" value="2" min="1" max="999" oninput="recalc()" class="cons-inp"/>
+      <div class="field-note">Lance incluído na parcela deste mês</div>
+    </div>
+  </div>
+
+  <!-- CAPITAL DE GIRO -->
+  <div class="sb-section">
+    <div class="sb-title">
+      <div class="sb-title-dot dot-giro"></div>
+      Capital de Giro
+    </div>
+
+    <div class="field">
+      <label>Capital de giro</label>
+      <div class="input-wrap input-currency">
+        <span class="input-prefix">R$</span>
+        <input type="text" id="giro_capital" class="giro-inp currency-input" value="100.000,00"
+          oninput="onCurrencyInput(this)" onblur="onCurrencyBlur(this,'giro_capital_raw')" data-raw-id="giro_capital_raw"/>
+        <input type="hidden" id="giro_capital_raw" value="100000"/>
+      </div>
+    </div>
+    <div class="field">
+      <label>Despesas do giro (IOF, tarifas, etc.)</label>
+      <div class="input-wrap input-currency">
+        <span class="input-prefix">R$</span>
+        <input type="text" id="giro_despesas" class="giro-inp currency-input" value="0,00"
+          oninput="onCurrencyInput(this)" onblur="onCurrencyBlur(this,'giro_despesas_raw')" data-raw-id="giro_despesas_raw"/>
+        <input type="hidden" id="giro_despesas_raw" value="0"/>
+      </div>
+      <div class="field-note">IOF, tarifa de cadastro, seguros e outras despesas</div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Data de início</label>
+        <input type="date" id="giro_data" value="" oninput="recalc()" class="giro-inp"/>
+      </div>
+      <div class="field">
+        <label>Prazo (meses)</label>
+        <input type="number" id="giro_meses" value="24" min="1" max="999" oninput="recalc()" class="giro-inp"/>
+      </div>
+    </div>
+    <div class="field">
+      <label>Parcela mensal padrão</label>
+      <div class="input-wrap input-currency">
+        <span class="input-prefix">R$</span>
+        <input type="text" id="giro_parc" class="giro-inp currency-input" value="4.666,67"
+          oninput="onCurrencyInput(this)" onblur="onCurrencyBlur(this,'giro_parc_raw')" data-raw-id="giro_parc_raw"/>
+        <input type="hidden" id="giro_parc_raw" value="4666.67"/>
+      </div>
+      <div class="field-note">Edite célula a célula no fluxo, ou importe via PDF/texto</div>
+    </div>
+  </div>
+
+</aside>
+
+<!-- ══ TABLE AREA ════════════════════════════════════════ -->
+<div class="table-area">
+  <div class="toolbar">
+    <span class="toolbar-lbl">Fluxo</span>
+    <div class="toolbar-sep"></div>
+
+    <button class="btn btn-cons btn-sm" onclick="openConsImport('text')" title="Importar dados do consórcio via texto">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3zm2 8h6a.5.5 0 0 0 0-1H5a.5.5 0 0 0 0 1zm0-2h6a.5.5 0 0 0 0-1H5a.5.5 0 0 0 0 1zm0-2h6a.5.5 0 0 0 0-1H5a.5.5 0 0 0 0 1z"/></svg>
+      Ler Cons.
+    </button>
+    <div class="toolbar-sep"></div>
+    <button class="btn btn-giro btn-sm" onclick="openGiroImport('text')" title="Importar parcelas do giro via texto">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm0 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3zm2 8h6a.5.5 0 0 0 0-1H5a.5.5 0 0 0 0 1zm0-2h6a.5.5 0 0 0 0-1H5a.5.5 0 0 0 0 1z"/></svg>
+      Texto Giro
+    </button>
+
+    <div class="toolbar-sep"></div>
+    <button class="btn btn-yellow btn-sm ml-auto" onclick="openReportModal()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+      Exportar Relatório
+    </button>
+  </div>
+
+  <!-- ══ RESULTS BAR ══════════════════════════════════════ -->
+  <div id="results-bar" class="results-bar">
+    <div class="rc horizontal giro-card">
+      <div class="rc-lbl">TIR Mensal — Combinado</div>
+      <div class="rc-val font" id="res_tir_m">—</div>
+    </div>
+    <div class="rc horizontal highlight">
+      <div class="rc-lbl">TIR Anual — Combinado</div>
+      <div class="rc-val" id="res_tir_a">—</div>
+    </div>
+    <div class="rc horizontal">
+      <div class="rc-lbl">Capital Total</div>
+      <div class="rc-val" id="res_capital">—</div>
+    </div>
+    <div class="rc horizontal">
+      <div class="rc-lbl">Total Pago</div>
+      <div class="rc-val" id="res_total_pago">—</div>
+    </div>
+    <div class="rc horizontal cons-card">
+      <div class="rc-lbl">Total Consórcio</div>
+      <div class="rc-val" id="res_cons_total">—</div>
+    </div>
+    <div class="rc horizontal giro-card">
+      <div class="rc-lbl">Total Giro (com despesas)</div>
+      <div class="rc-val" id="res_giro_total">—</div>
+    </div>
+    <div class="rc horizontal">
+      <div class="rc-lbl">Despesas do Giro</div>
+      <div class="rc-val" id="res_despesas">—</div>
+    </div>
+    <div class="rc horizontal">
+      <div class="rc-lbl">Custo Total (acima do capital)</div>
+      <div class="rc-val" id="res_custo">—</div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="flow-table">
+      <thead>
+        <tr>
+          <th class="th-group th-period" colspan="2">Período</th>
+          <th class="th-group th-cons" colspan="2">Consórcio</th>
+          <th class="th-group th-giro" colspan="2">Capital de Giro</th>
+          <th class="th-group th-comb" colspan="1">Combinado</th>
+        </tr>
+        <tr>
+          <th class="sub center period-h">Mês</th>
+          <th class="sub center period-h">Data</th>
+          <th class="sub cons-h">Parcela (R$)</th>
+          <th class="sub cons-h">Lance (R$)</th>
+          <th class="sub giro-h">Parcela (R$)</th>
+          <th class="sub giro-h">Despesas (R$)</th>
+          <th class="sub comb-h">Total (R$)</th>
+        </tr>
+      </thead>
+      <tbody id="flow-body"></tbody>
+    </table>
+  </div>
+</div>
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL: CONSÓRCIO TEXT IMPORTER
+══════════════════════════════════════════════════════ -->
+<div class="overlay" id="consImportModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Ler dados do <em>Consórcio</em> — via texto</h3>
+      <button class="modal-close" onclick="closeConsImport()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.84rem;color:var(--gray-700);margin-bottom:12px;line-height:1.6">
+        Cole abaixo o texto copiado do contrato, proposta ou extrato do consórcio.
+        O sistema extrai automaticamente: <strong>total contratado, valor do lance, parcela antes/após o lance e prazo</strong>.
+      </p>
+      <textarea class="ta-import" id="consTextInput" rows="8"
+        placeholder="Cole aqui o texto copiado do portal ou proposta do consórcio.
+
+Formato portal (título + valor na linha abaixo):
+
+Total Contratado
+R$450.000,00
+Primeira Parcela
+R$5.387,85
+Valor do Lance
+R$225.000,00
+Nova Parcela Após Lance
+R$3.115,12
+Prazo Atual
+100
+
+Ou texto corrido com os valores na mesma linha."
+        oninput="parseConsText()"></textarea>
+      <div id="consParseStatus"></div>
+      <div id="consParsedFields" class="parsed-fields" style="display:none"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeConsImport()">Cancelar</button>
+      <button class="btn btn-cons" id="btnApplyCons" onclick="applyConsParsed()" style="display:none">
+        ✓ Aplicar dados extraídos
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL: CDC IMPORT
+══════════════════════════════════════════════════════ -->
+<div class="overlay" id="cdcImportModal">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>Importar dados de <em>CDC</em> — parcela fixa</h3>
+      <button class="modal-close" onclick="closeCdcImport()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.84rem;color:var(--gray-700);margin-bottom:12px;line-height:1.6">
+        Cole o texto do CDC (crédito direto ao consumidor). O sistema extrai
+        <strong>valor da parcela</strong> e <strong>prazo</strong>, depois preenche
+        a coluna de giro com a mesma parcela repetida por todo o período.
+      </p>
+      <textarea class="ta-import" id="cdcTextInput" rows="8"
+        placeholder="Exemplos de formatos aceitos:
+
+Valor da Parcela
+R$ 2.850,00
+Prazo
+36
+
+— ou —
+
+Valor da Parcela: R$ 2.850,00
+Prazo: 36 meses
+
+— ou texto livre do contrato / proposta CDC —"
+        oninput="parseCdcText()"></textarea>
+      <div id="cdcParseStatus"></div>
+      <div id="cdcParsedFields" class="parsed-fields" style="display:none;grid-template-columns:1fr 1fr"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeCdcImport()">Cancelar</button>
+      <button class="btn btn-giro" id="btnApplyCdc" onclick="applyCdcParsed()" style="display:none">
+        ✓ Preencher parcelas do giro
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL: GIRO IMPORT (PDF + TEXTO TABS)
+══════════════════════════════════════════════════════ -->
+<div class="overlay" id="giroImportModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Importar parcelas de <em>Giro</em></h3>
+      <button class="modal-close" onclick="closeGiroImport()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="tab-bar">
+        <button class="tab-btn active" id="gtab-pdf"  onclick="switchGiroTab('pdf')">📄 PDF</button>
+        <button class="tab-btn"        id="gtab-text" onclick="switchGiroTab('text')">📋 Texto / Planilha</button>
+      </div>
+
+      <!-- PDF PANE -->
+      <div class="tab-pane active" id="gpane-pdf">
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('pdfFileInput').click()">
+          <div class="dz-icon">📄</div>
+          <p>Arraste um PDF ou clique para selecionar</p>
+          <div class="dz-sub">A coluna de parcelas é identificada automaticamente</div>
+        </div>
+        <input type="file" id="pdfFileInput" accept="application/pdf" onchange="handlePdfFile(this.files[0])"/>
+        <div id="pdfStatus"></div>
+        <div id="pdfColSelector" class="col-selector" style="display:none">
+          <label>Colunas detectadas — selecione a que contém as PARCELAS:</label>
+          <div class="col-list" id="colList"></div>
+        </div>
+        <div id="pdfPreviewWrap" style="display:none">
+          <div class="preview-wrap" id="pdfPreview"></div>
+        </div>
+      </div>
+
+      <!-- TEXT PANE -->
+      <div class="tab-pane" id="gpane-text">
+        <textarea class="ta-import" id="giroTextInput"
+          placeholder="Cole aqui dados copiados de Excel, Google Sheets ou tabela:
+
+Mês	Data	Parcela	Saldo
+1	jan/25	4.666,67	95.333,33
+2	fev/25	4.666,67	90.666,67
+...
+
+Aceita TAB, ; ou , como separador. Cabeçalho é opcional."
+          oninput="handleGiroText()"></textarea>
+        <div class="ta-hint">
+          Separadores aceitos: <code>TAB</code> <code>;</code> <code>,</code> · Formatos: <code>1.234,56</code> e <code>1234.56</code>
+        </div>
+        <div id="taStatus"></div>
+        <div id="taColSelector" class="col-selector" style="display:none">
+          <label>Selecione a coluna que contém as PARCELAS:</label>
+          <div class="col-list" id="taColList"></div>
+        </div>
+        <div id="taPreviewWrap" style="display:none">
+          <div class="preview-wrap" id="taPreview"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeGiroImport()">Cancelar</button>
+      <button class="btn btn-giro" id="btnImportPdf" onclick="importPdfColumn()" style="display:none">✓ Importar coluna (PDF)</button>
+      <button class="btn btn-giro" id="btnImportTa"  onclick="importTextColumn()" style="display:none">✓ Importar coluna (Texto)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL: REPORT
+══════════════════════════════════════════════════════ -->
+<div class="overlay" id="reportModal">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>Exportar <em>Relatório PDF</em></h3>
+      <button class="modal-close" onclick="closeReportModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--r-md);padding:16px 18px;margin-bottom:14px">
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-500);margin-bottom:12px">Prévia do relatório</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="rep-preview-cards"></div>
+      </div>
+      <div style="font-size:.78rem;color:var(--gray-500);line-height:1.7">
+        O PDF inclui: resumo dos parâmetros, resultados da TIR e tabela completa do fluxo de pagamentos.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeReportModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="generatePDF()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+        Baixar PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+let N = 60;
+let consFlow = new Array(N).fill(null);   // parcela do consórcio
+let giroFlow = new Array(N).fill(null);   // parcela do giro
+let cdcData   = {parc:0, prazo:0};
+let pdfParsed = {headers:[], rows:[], selectedCol:-1};
+let taParsed  = {headers:[], rows:[], selectedCol:-1};
+let consParsedData = {};
+let activeGiroTab = 'pdf';
+
+// flags de carregamento dos dados
+let consLoaded = false;
+let giroLoaded = false;
+
+// ══════════════════════════════════════════════════════════
+// DYNAMIC N
+// ══════════════════════════════════════════════════════════
+function updateN(){
+  const consMeses = Math.round(rn('cons_meses') || 0);
+  const giroMeses = Math.round(rn('giro_meses') || 0);
+  const maxN = Math.max(consMeses, giroMeses, 1);
+  
+  if(maxN !== N){
+    N = maxN;
+    const newCons = new Array(N).fill(null);
+    const newGiro = new Array(N).fill(null);
+    for(let i = 0; i < Math.min(consFlow.length, N); i++) newCons[i] = consFlow[i];
+    for(let i = 0; i < Math.min(giroFlow.length, N); i++) newGiro[i] = giroFlow[i];
+    consFlow = newCons;
+    giroFlow = newGiro;
+    
+    const el = document.getElementById('topbarN');
+    if(el) el.innerHTML = `Períodos: <strong>${N}</strong>`;
+    return true;
+  }
+  return false;
+}
+
+// ══════════════════════════════════════════════════════════
+// CURRENCY INPUT
+// ══════════════════════════════════════════════════════════
+function parseCurrency(str){
+  let s = String(str).replace(/[R$\s]/g,'');
+  if(s.includes(',') && s.includes('.')){
+    const lastDot   = s.lastIndexOf('.');
+    const lastComma = s.lastIndexOf(',');
+    if(lastComma > lastDot){ s = s.replace(/\./g,'').replace(',','.'); }
+    else                   { s = s.replace(/,/g,''); }
+  } else if(s.includes(',')){ s = s.replace(/\./g,'').replace(',','.'); }
+  return parseFloat(s) || 0;
+}
+
+function formatCurrencyDisplay(n){
+  if(isNaN(n)||!isFinite(n)) return '0,00';
+  return n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function onCurrencyInput(el){
+  let v = el.value.replace(/[^\d.,]/g,'');
+  el.value = v;
+}
+
+function onCurrencyBlur(el, rawId){
+  const raw = parseCurrency(el.value);
+  document.getElementById(rawId).value = raw;
+  el.value = formatCurrencyDisplay(raw);
+  recalc();
+}
+
+function setCurrencyField(displayId, rawId, value){
+  document.getElementById(displayId).value = formatCurrencyDisplay(value);
+  document.getElementById(rawId).value = value;
+}
+
+// ══════════════════════════════════════════════════════════
+// VALUE GETTERS
+// ══════════════════════════════════════════════════════════
+const rn = id => parseFloat(document.getElementById(id).value) || 0;
+const sv = id => document.getElementById(id).value;
+
+function getVal(id){
+  const rawEl = document.getElementById(id+'_raw');
+  if(rawEl) return parseFloat(rawEl.value) || 0;
+  return parseFloat(document.getElementById(id).value) || 0;
+}
+
+// ══════════════════════════════════════════════════════════
+// FORMATTING
+// ══════════════════════════════════════════════════════════
+function fmt(n, dec=2){
+  if(isNaN(n)||!isFinite(n)) return '—';
+  return 'R$\u00a0'+n.toLocaleString('pt-BR',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+function fmtN(n,dec=2){
+  if(isNaN(n)||!isFinite(n)) return '—';
+  return n.toLocaleString('pt-BR',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+function fmtPctM(n){ return isFinite(n)?(n*100).toFixed(4)+'% a.m.':'—' }
+function fmtPctA(n){ return isFinite(n)?(n*100).toFixed(2)+'% a.a.':'—' }
+
+function addMonths(dateStr, n){
+  const d = new Date((dateStr||'2025-01-01')+'T00:00:00');
+  d.setMonth(d.getMonth()+n);
+  return d;
+}
+function fmtDate(d){ return d.toLocaleDateString('pt-BR',{month:'2-digit',year:'numeric'}) }
+
+// ══════════════════════════════════════════════════════════
+// XIRR
+// ══════════════════════════════════════════════════════════
+function xirr(cf, dates){
+  if(cf.length!==dates.length||cf.length<2) return NaN;
+  const d0 = dates[0];
+  const t = dates.map(d=>(d-d0)/(365.25*24*3600*1000));
+  const npv  = r => cf.reduce((s,c,i)=>s+c/Math.pow(1+r,t[i]),0);
+  const dnpv = r => cf.reduce((s,c,i)=>s-t[i]*c/Math.pow(1+r,t[i]+1),0);
+  let r=0.1;
+  for(let i=0;i<400;i++){
+    const f=npv(r), df=dnpv(r);
+    if(Math.abs(df)<1e-14) break;
+    const nr=r-f/df;
+    if(Math.abs(nr-r)<1e-10){r=nr;break;}
+    r=nr; if(r<=-1) r=1e-4;
+  }
+  return isFinite(r)&&!isNaN(r)?r:NaN;
+}
+
+// ══════════════════════════════════════════════════════════
+// FLOW DEFAULTS
+// ══════════════════════════════════════════════════════════
+function getConsDefault(i){
+  const meses    = Math.round(rn('cons_meses'));
+  const lanceMes = Math.round(rn('cons_lance_mes'));
+  const n=i+1;
+  if(n>meses) return {parc:0};
+  return {parc: n<lanceMes ? getVal('cons_parc_antes') : getVal('cons_parc_depois')};
+}
+function getGiroDefault(i){
+  const meses=Math.round(rn('giro_meses'));
+  if(i+1>meses) return 0;
+  return getVal('giro_parc');
+}
+
+// ══════════════════════════════════════════════════════════
+// BUILD TABLE (7 colunas, sem saldos)
+// ══════════════════════════════════════════════════════════
+function buildTable(){
+  updateN();
+  const tbody=document.getElementById('flow-body');
+  tbody.innerHTML='';
+  const lanceMes=Math.round(rn('cons_lance_mes'));
+  const giroDesp=getVal('giro_despesas'); // despesa única no início
+
+  for(let i=0;i<N;i++){
+    const n=i+1;
+    const isLance=(n===lanceMes);
+    const date=addMonths(sv('cons_data'),n);
+
+    const tr=document.createElement('tr');
+    if(isLance) tr.classList.add('lance-row');
+
+    tr.innerHTML=`
+      <td class="period-c">${n}</td>
+      <td class="period-c">${fmtDate(date)}</td>
+      <td class="cons-c editable" id="cc_${i}"></td>
+      <td class="cons-c" id="cl_${i}" style="text-align:right;padding:7px 11px"></td>
+      <td class="giro-c editable giro-inp" id="gc_${i}"></td>
+      <td class="exp-c right" id="ge_${i}">${i===0&&giroDesp>0?fmtN(giroDesp):'—'}</td>
+      <td class="comb-c right" id="ct_${i}"></td>`;
+    tbody.appendChild(tr);
+
+    // Cons input
+    const ci=document.createElement('input');
+    ci.type='text'; ci.dataset.idx=i; ci.dataset.type='cons';
+    const dc=getConsDefault(i);
+    ci.value=fmtN(consFlow[i]!==null?consFlow[i]:dc.parc);
+    ci.addEventListener('focus',e=>{e.target.select()});
+    ci.addEventListener('blur',e=>{
+      const val=parseCurrency(e.target.value);
+      consFlow[+e.target.dataset.idx]=isNaN(val)?null:val;
+      e.target.value=fmtN(val);
+      updateComputed();
+    });
+    document.getElementById(`cc_${i}`).appendChild(ci);
+
+    // Giro input
+    const gi=document.createElement('input');
+    gi.type='text'; gi.dataset.idx=i; gi.dataset.type='giro';
+    const dg=getGiroDefault(i);
+    gi.value=fmtN(giroFlow[i]!==null?giroFlow[i]:dg);
+    gi.addEventListener('focus',e=>{e.target.select()});
+    gi.addEventListener('blur',e=>{
+      const val=parseCurrency(e.target.value);
+      giroFlow[+e.target.dataset.idx]=isNaN(val)?null:val;
+      e.target.value=fmtN(val);
+      updateComputed();
+    });
+    document.getElementById(`gc_${i}`).appendChild(gi);
+  }
+
+  // Total row
+  const ttr=document.createElement('tr');
+  ttr.className='total-row';
+  ttr.innerHTML=`
+    <td class="center" colspan="2">TOTAIS</td>
+    <td style="text-align:right" id="tot_cons"></td>
+    <td style="text-align:right" id="tot_lance"></td>
+    <td style="text-align:right" id="tot_giro"></td>
+    <td style="text-align:right" id="tot_desp">${fmtN(giroDesp)}</td>
+    <td style="text-align:right" id="tot_total"></td>`;
+  tbody.appendChild(ttr);
+  updateComputed();
+}
+
+// ══════════════════════════════════════════════════════════
+// UPDATE COMPUTED
+// ══════════════════════════════════════════════════════════
+function updateComputed(){
+  const lanceMes   =Math.round(rn('cons_lance_mes'));
+  const lanceVal   =getVal('cons_lance_valor');
+  const consCapital=getVal('cons_capital');
+  const giroCapital=getVal('giro_capital');
+  const giroDesp   =getVal('giro_despesas');
+
+  let totC=0,totL=0,totG=0;
+  const periods=[];
+
+  for(let i=0;i<N;i++){
+    const n=i+1;
+    const isLance=(n===lanceMes);
+    const defC=getConsDefault(i), defG=getGiroDefault(i);
+    const cInpEl=document.querySelector(`#cc_${i} input`);
+    const gInpEl=document.querySelector(`#gc_${i} input`);
+
+    const cp=consFlow[i]!==null?consFlow[i]:defC.parc;
+    const gp=giroFlow[i]!==null?giroFlow[i]:defG;
+    const la=isLance?lanceVal:0;
+    const de=(i===0)?giroDesp:0; // despesas apenas no mês 1
+
+    if(cInpEl&&consFlow[i]===null) cInpEl.value=fmtN(cp);
+    if(gInpEl&&giroFlow[i]===null) gInpEl.value=fmtN(gp);
+
+    const total=cp+la+gp+de;
+    totC+=cp; totL+=la; totG+=gp;
+
+    const lc=document.getElementById(`cl_${i}`);
+    if(lc){
+      if(la>0){lc.textContent=fmtN(la);lc.style.color='#8B6800';lc.style.fontWeight='700';lc.classList.remove('zero');}
+      else    {lc.textContent='—';lc.style.color='';lc.style.fontWeight='';lc.classList.add('zero');}
+    }
+
+    // Despesas cell (read-only, já preenchida no build)
+    const ge=document.getElementById(`ge_${i}`);
+    if(ge && i===0 && giroDesp>0){
+      ge.textContent=fmtN(giroDesp);
+    }
+
+    setCmp(`ct_${i}`,total, total===0);
+    periods.push({total, date:addMonths(sv('cons_data'),n)});
+  }
+
+  setTot('tot_cons', totC);
+  setTot('tot_lance',totL);
+  setTot('tot_giro', totG);
+  setTot('tot_desp', giroDesp);
+  setTot('tot_total',totC+totL+totG+giroDesp);
+
+  // XIRR — considera despesas como saída no mês 1
+  let lastNonZero = -1;
+  for(let i=periods.length-1;i>=0;i--){
+    if(periods[i].total>0){ lastNonZero=i; break; }
+  }
+
+  let tirA=NaN, tirM=NaN;
+  if(lastNonZero>=0){
+    const t0=new Date((sv('cons_data')||'2025-01-01')+'T00:00:00');
+    const cfV=[-(consCapital+giroCapital)];
+    const cfD=[t0];
+    // Despesas do giro são subtraídas do capital recebido (mês 0)
+    if(giroDesp>0){
+      cfV[0] += giroDesp; // reduz o valor líquido recebido
+    }
+    for(let i=0;i<=lastNonZero;i++){
+      const p=periods[i];
+      if(p.total>0){ cfV.push(p.total); cfD.push(p.date); }
+    }
+    if(cfV.length>1){ tirA=xirr(cfV,cfD); tirM=Math.pow(1+tirA,1/12)-1; }
+  }
+
+  document.getElementById('res_tir_m').textContent    = fmtPctM(tirM);
+  document.getElementById('res_tir_a').textContent    = fmtPctA(tirA);
+  document.getElementById('res_capital').textContent  = fmt(consCapital+giroCapital);
+  document.getElementById('res_cons_total').textContent = fmt(totC+totL);
+  document.getElementById('res_giro_total').textContent = fmt(totG+giroDesp);
+  document.getElementById('res_despesas').textContent = fmt(giroDesp);
+  document.getElementById('res_total_pago').textContent = fmt(totC+totL+totG+giroDesp);
+  document.getElementById('res_custo').textContent    = fmt((totC+totL+totG+giroDesp)-(consCapital+giroCapital));
+}
+
+function setCmp(id,val,zero){
+  const el=document.getElementById(id); if(!el) return;
+  el.textContent=zero?'—':fmtN(val);
+  el.classList.toggle('zero',zero);
+}
+function setTot(id,val){
+  const el=document.getElementById(id); if(!el) return;
+  el.textContent=fmtN(val);
+}
+
+// ══════════════════════════════════════════════════════════
+// RECALC
+// ══════════════════════════════════════════════════════════
+let rt;
+function recalc(){ 
+  clearTimeout(rt); 
+  rt=setTimeout(()=>{
+    updateN();
+    buildTable();
+  },80); 
+}
+
+// ══════════════════════════════════════════════════════════
+// RESETS
+// ══════════════════════════════════════════════════════════
+function resetConsFlow(){ consFlow=new Array(N).fill(null); buildTable(); }
+function resetGiroFlow(){ giroFlow=new Array(N).fill(null); buildTable(); }
+function clearAll(){ 
+  consFlow=new Array(N).fill(null); 
+  giroFlow=new Array(N).fill(null); 
+  cdcData={parc:0,prazo:0};
+  pdfParsed={headers:[],rows:[],selectedCol:-1};
+  taParsed={headers:[],rows:[],selectedCol:-1};
+  consLoaded = false;
+  giroLoaded = false;
+  checkResultsVisibility();
+  buildTable(); 
+}
+
+// ══════════════════════════════════════════════════════════
+// RESULTADOS BAR VISIBILITY
+// ══════════════════════════════════════════════════════════
+function checkResultsVisibility() {
+  const bar = document.getElementById('results-bar');
+  if (consLoaded && giroLoaded) {
+    bar.classList.add('visible');
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// CONSÓRCIO TEXT IMPORTER
+// ══════════════════════════════════════════════════════════
+function openConsImport(){
+  document.getElementById('consImportModal').classList.add('open');
+  document.getElementById('consTextInput').value='';
+  document.getElementById('consParseStatus').innerHTML='';
+  document.getElementById('consParsedFields').style.display='none';
+  document.getElementById('btnApplyCons').style.display='none';
+  consParsedData={};
+}
+function closeConsImport(){ document.getElementById('consImportModal').classList.remove('open'); }
+
+function parseConsText(){
+  const text=document.getElementById('consTextInput').value;
+  if(!text.trim()){ document.getElementById('consParseStatus').innerHTML=''; return; }
+
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  const lineMap = {};
+  for(let i=0;i<lines.length-1;i++){
+    const k = lines[i].toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9\s]/g,'').trim();
+    lineMap[k] = lines[i+1];
+  }
+
+  function extractMoney(str){
+    if(!str) return null;
+    const v=parseCurrency(str.replace(/R\$\s*/,'').trim());
+    return isNaN(v)||v<=0?null:v;
+  }
+  function extractInt(str){
+    if(!str) return null;
+    const m=str.match(/(\d+)/);
+    return m?parseInt(m[1]):null;
+  }
+
+  const matchers={
+    capital:    k=>/total\s*contratado|capital\s*contratado|valor\s*contratado/.test(k),
+    lance:      k=>/valor\s*d[oa]?\s*lance|lance/.test(k) && !/nova|apos|pos/.test(k),
+    parcAntes:  k=>/primeira\s*parcela|parcela\s*antes|parcela\s*pre|prestacao\s*antes/.test(k),
+    parcDepois: k=>/nova\s*parcela|parcela\s*apos|parcela\s*pos|nova\s*prestacao|prestacao\s*apos/.test(k),
+    prazo:      k=>/prazo\s*atual|prazo/.test(k),
+  };
+
+  const found={};
+  for(const [k,rawVal] of Object.entries(lineMap)){
+    if(!found.capital    && matchers.capital(k))    { const v=extractMoney(rawVal); if(v) found.capital=v; }
+    if(!found.lance      && matchers.lance(k))      { const v=extractMoney(rawVal); if(v) found.lance=v; }
+    if(!found.parcAntes  && matchers.parcAntes(k))  { const v=extractMoney(rawVal); if(v) found.parcAntes=v; }
+    if(!found.parcDepois && matchers.parcDepois(k)) { const v=extractMoney(rawVal); if(v) found.parcDepois=v; }
+    if(!found.prazo      && matchers.prazo(k))      { const v=extractInt(rawVal);   if(v) found.prazo=v; }
+  }
+
+  const inlinePat={
+    capital:    [/total\s*contratado[\s:]+R?\$?\s*([\d.,]+)/i,/capital\s*contratado[\s:]+R?\$?\s*([\d.,]+)/i],
+    lance:      [/valor\s*d[oa]?\s*lance[\s:]+R?\$?\s*([\d.,]+)/i],
+    parcAntes:  [/primeira\s*parcela[\s:]+R?\$?\s*([\d.,]+)/i,/parcela\s*antes[\s:]+R?\$?\s*([\d.,]+)/i],
+    parcDepois: [/nova\s*parcela[\s:]+R?\$?\s*([\d.,]+)/i,/parcela\s*ap[o\u00f3]s[\s:]+R?\$?\s*([\d.,]+)/i],
+    prazo:      [/prazo\s*atual[\s:]+(\d+)/i,/prazo[\s:.]+(\d+)\s*m/i],
+  };
+  for(const [key,pats] of Object.entries(inlinePat)){
+    if(found[key]) continue;
+    for(const pat of pats){
+      const m=text.match(pat);
+      if(m){ found[key]=key==='prazo'?parseInt(m[1]):parseCurrency(m[1]); break; }
+    }
+  }
+
+  consParsedData=found;
+  const keys=['capital','lance','parcAntes','parcDepois','prazo'];
+  const labels={capital:'Total contratado',lance:'Valor do lance',parcAntes:'Parcela antes do lance',parcDepois:'Parcela após o lance',prazo:'Prazo (meses)'};
+  const count=Object.keys(found).length;
+
+  const wrap=document.getElementById('consParsedFields');
+  wrap.innerHTML=keys.map(k=>{
+    const val=found[k];
+    const hasVal=val!==undefined&&val!==null&&!isNaN(val)&&val>0;
+    const display=hasVal?(k==='prazo'?val+' meses':fmt(val)):'Não identificado';
+    return `<div class="pf-item ${hasVal?'found':'missing'}">
+      <div class="pf-lbl">${labels[k]}</div>
+      <div class="pf-val">${display}</div>
+    </div>`;
+  }).join('');
+  wrap.style.display='grid';
+
+  const st=document.getElementById('consParseStatus');
+  if(count===0){
+    st.innerHTML='<div class="status-msg st-warn">Nenhum dado identificado.</div>';
+    document.getElementById('btnApplyCons').style.display='none';
+  } else {
+    st.innerHTML=`<div class="status-msg st-ok">${count} de 5 campos identificados.</div>`;
+    document.getElementById('btnApplyCons').style.display='flex';
+  }
+}
+
+function applyConsParsed(){
+  const d=consParsedData;
+  if(d.capital)    { setCurrencyField('cons_capital',    'cons_capital_raw',    d.capital);    }
+  if(d.lance)      { setCurrencyField('cons_lance_valor','cons_lance_valor_raw',d.lance);      }
+  if(d.parcAntes)  { setCurrencyField('cons_parc_antes', 'cons_parc_antes_raw', d.parcAntes);  }
+  if(d.parcDepois) { setCurrencyField('cons_parc_depois','cons_parc_depois_raw',d.parcDepois); }
+  if(d.prazo)      { document.getElementById('cons_meses').value=d.prazo; }
+  updateN();
+  consLoaded = true;
+  checkResultsVisibility();
+  closeConsImport();
+  recalc();
+}
+
+// ══════════════════════════════════════════════════════════
+// CDC IMPORTER
+// ══════════════════════════════════════════════════════════
+let cdcParsedData = {};
+
+function openCdcImport(){
+  document.getElementById('cdcImportModal').classList.add('open');
+  document.getElementById('cdcTextInput').value='';
+  document.getElementById('cdcParseStatus').innerHTML='';
+  document.getElementById('cdcParsedFields').style.display='none';
+  document.getElementById('btnApplyCdc').style.display='none';
+  cdcParsedData={};
+}
+function closeCdcImport(){ document.getElementById('cdcImportModal').classList.remove('open'); }
+
+function parseCdcText(){
+  const text = document.getElementById('cdcTextInput').value;
+  if(!text.trim()){ document.getElementById('cdcParseStatus').innerHTML=''; return; }
+
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+
+  function norm(s){
+    return (s||'').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9\s%]/g,' ').replace(/\s+/g,' ').trim();
+  }
+  function extractMoney(str){
+    const v = parseCurrency((str||'').replace(/R\$\s*/i,'').trim());
+    return (!isNaN(v)&&v>0&&v<1e8) ? v : null;
+  }
+  function extractInt(str){
+    const m = (str||'').match(/(\d{1,4})(?=\s|$|\s*m)/);
+    return m && parseInt(m[1])>=1 && parseInt(m[1])<=999 ? parseInt(m[1]) : null;
+  }
+
+  const isParc  = k => /\bparcela\b|\bprestacao\b|valor\s*base|\bpmto\b|pagamento\s*mensal|valor\s*mensal/.test(k)
+                    && !/soma|total|cet|juros|car[eê]ncia|solicitado|liberado|financiado|iof/.test(k);
+  const isPrazo = k => /\bprazo\b|qtde\b|\bqtd\b|num\s*parcelas|numero\s*(de\s*)?parcelas|quantidade\s*(de\s*)?parcelas/.test(k)
+                    && !/sem\s*car|ultimo|ultimo|dia\b|ano\b/.test(k);
+
+  const found = {};
+
+  for(let i=0;i<lines.length-1;i++){
+    const k = norm(lines[i]);
+    const vRaw = lines[i+1];
+    if(!found.parc  && isParc(k))  { const n=extractMoney(vRaw); if(n) found.parc=n; }
+    if(!found.prazo && isPrazo(k)) { const n=extractInt(vRaw);   if(n) found.prazo=n; }
+  }
+
+  if(!found.parc || !found.prazo){
+    // estratégias adicionais de parsing (mantidas do original)
+    const inlinePat = {
+      parc:  [/parcela[\s:R$]+(([\d.]+,\d{2}))/i,/valor\s*base[\s:R$]+(([\d.]+,\d{2}))/i,/prestacao[\s:R$]+(([\d.]+,\d{2}))/i],
+      prazo: [/prazo[^\d]*(\d{1,4})\s*m/i,/qtde?[^\d]*(\d{1,4})/i,/\b(\d{1,4})\s*parcelas/i,/\b(\d{1,4})\s*meses/i],
+    };
+    for(const [key,pats] of Object.entries(inlinePat)){
+      if(found[key]) continue;
+      for(const pat of pats){
+        const m=text.match(pat);
+        if(m){
+          const v = key==='prazo' ? parseInt(m[1]||m[2]) : parseCurrency(m[1]||m[2]);
+          if(key==='prazo'&&v>=1&&v<=999){ found.prazo=v; break; }
+          if(key==='parc'&&v>0&&v<1e8)  { found.parc=v;  break; }
+        }
+      }
+    }
+  }
+
+  cdcParsedData = found;
+  const labels = { parc:'Valor da parcela (mensal)', prazo:'Prazo (meses)' };
+  const wrap = document.getElementById('cdcParsedFields');
+  wrap.innerHTML = ['parc','prazo'].map(k=>{
+    const val=found[k];
+    const hasVal=val!==undefined&&val>0;
+    const display=hasVal?(k==='prazo'?val+' meses':fmt(val)):'Não identificado';
+    return `<div class="pf-item ${hasVal?'found':'missing'}">
+      <div class="pf-lbl">${labels[k]}</div>
+      <div class="pf-val">${display}</div>
+    </div>`;
+  }).join('');
+  wrap.style.display='grid';
+
+  const st = document.getElementById('cdcParseStatus');
+  const count = Object.keys(found).length;
+  if(count===0){
+    st.innerHTML='<div class="status-msg st-warn">Nenhum dado identificado.</div>';
+    document.getElementById('btnApplyCdc').style.display='none';
+  } else {
+    st.innerHTML=`<div class="status-msg st-ok">${count} de 2 campos identificados.</div>`;
+    document.getElementById('btnApplyCdc').style.display='flex';
+  }
+}
+
+function applyCdcParsed(){
+  const d = cdcParsedData;
+  const parc  = d.parc  || 0;
+  const prazo = d.prazo || 0;
+  if(!parc || !prazo){
+    document.getElementById('cdcParseStatus').innerHTML=
+      '<div class="status-msg st-warn">Parcela e prazo precisam ser identificados.</div>';
+    return;
+  }
+  cdcData = {parc, prazo};
+  setCurrencyField('giro_parc', 'giro_parc_raw', parc);
+  document.getElementById('giro_meses').value = prazo;
+  updateN();
+  giroFlow = new Array(N).fill(null);
+  giroLoaded = true;
+  checkResultsVisibility();
+  closeCdcImport();
+  buildTable();
+}
+
+// ══════════════════════════════════════════════════════════
+// GIRO IMPORT MODAL
+// ══════════════════════════════════════════════════════════
+function openGiroImport(tab='pdf'){
+  document.getElementById('giroImportModal').classList.add('open');
+  resetGiroPdfUI(); resetGiroTaUI();
+  switchGiroTab(tab);
+}
+function closeGiroImport(){ document.getElementById('giroImportModal').classList.remove('open'); }
+
+function switchGiroTab(tab){
+  activeGiroTab=tab;
+  ['pdf','text'].forEach(t=>{
+    document.getElementById(`gtab-${t}`).classList.toggle('active',t===tab);
+    document.getElementById(`gpane-${t}`).classList.toggle('active',t===tab);
+  });
+  document.getElementById('btnImportPdf').style.display=
+    (tab==='pdf'&&pdfParsed.selectedCol>=0)?'flex':'none';
+  document.getElementById('btnImportTa').style.display=
+    (tab==='text'&&taParsed.selectedCol>=0)?'flex':'none';
+}
+
+function resetGiroPdfUI(){
+  setStatus('pdfStatus','','');
+  document.getElementById('pdfColSelector').style.display='none';
+  document.getElementById('pdfPreviewWrap').style.display='none';
+  document.getElementById('btnImportPdf').style.display='none';
+  pdfParsed={headers:[],rows:[],selectedCol:-1};
+}
+
+function setStatus(elId,type,msg){
+  document.getElementById(elId).innerHTML=
+    msg?`<div class="status-msg st-${type}">${msg}</div>`:'';
+}
+
+async function handlePdfFile(file){
+  if(!file) return;
+  setStatus('pdfStatus','info','<span class="spinner"></span>&nbsp; Lendo PDF...');
+  document.getElementById('pdfColSelector').style.display='none';
+  document.getElementById('pdfPreviewWrap').style.display='none';
+  document.getElementById('btnImportPdf').style.display='none';
+  try{
+    const ab=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+    const allLines=[];
+    for(let p=1;p<=pdf.numPages;p++){
+      const page=await pdf.getPage(p);
+      const tc=await page.getTextContent();
+      const lm={};
+      for(const item of tc.items){
+        if(!item.str.trim()) continue;
+        const y=Math.round(item.transform[5]);
+        if(!lm[y]) lm[y]=[];
+        lm[y].push({x:item.transform[4],str:item.str.trim()});
+      }
+      Object.keys(lm).map(Number).sort((a,b)=>b-a).forEach(y=>{
+        allLines.push(lm[y].sort((a,b)=>a.x-b.x).map(i=>i.str));
+      });
+    }
+    if(!allLines.length){setStatus('pdfStatus','err','Nenhum texto encontrado.');return;}
+    const maxW=Math.max(...allLines.map(l=>l.length));
+    if(maxW<2){setStatus('pdfStatus','err','Colunas não detectadas.');return;}
+    const headerRow=allLines.find(l=>l.length>=maxW-1)||allLines[0];
+    const hIdx=allLines.indexOf(headerRow);
+    const dataRows=allLines.slice(hIdx+1).filter(r=>
+      r.some(c=>{const n=c.replace(/[R$\s.]/g,'').replace(',','.');return !isNaN(parseFloat(n))&&n.length>0;})
+    ).slice(0,999);
+    if(!dataRows.length){setStatus('pdfStatus','err','Sem dados numéricos.');return;}
+    const cols=headerRow.length;
+    const normed=dataRows.map(r=>{const o=[];for(let c=0;c<cols;c++)o.push(r[c]||'');return o;});
+    pdfParsed.headers=headerRow; pdfParsed.rows=normed;
+    pdfParsed.selectedCol=autoDetectCol(headerRow,normed);
+    setStatus('pdfStatus','ok',`PDF lido — ${normed.length} linhas.`);
+    renderColChips('colList',pdfParsed,'pdfParsed');
+    renderPreviewTable('pdfPreview',pdfParsed);
+    document.getElementById('pdfColSelector').style.display='block';
+    document.getElementById('pdfPreviewWrap').style.display='block';
+    document.getElementById('btnImportPdf').style.display='flex';
+  } catch(e){setStatus('pdfStatus','err','Erro: '+e.message);}
+}
+
+function importPdfColumn(){
+  applyColToGiro(pdfParsed);
+  closeGiroImport();
+}
+
+function resetGiroTaUI(){
+  setStatus('taStatus','','');
+  document.getElementById('taColSelector').style.display='none';
+  document.getElementById('taPreviewWrap').style.display='none';
+  document.getElementById('btnImportTa').style.display='none';
+  taParsed={headers:[],rows:[],selectedCol:-1};
+  document.getElementById('giroTextInput').value='';
+}
+
+function handleGiroText(){
+  const raw=document.getElementById('giroTextInput').value.trim();
+  if(!raw){resetGiroTaUI();return;}
+  const fl=raw.split('\n')[0];
+  let sep='\t';
+  if((fl.match(/;/g)||[]).length>(fl.match(/\t/g)||[]).length) sep=';';
+  else if(!fl.includes('\t')&&(fl.match(/,/g)||[]).length>1) sep=',';
+  const lines=raw.split('\n').map(l=>l.split(sep).map(c=>c.trim())).filter(l=>l.some(c=>c));
+  if(lines.length<2){setStatus('taStatus','warn','Cole pelo menos 2 linhas.');return;}
+  const firstHasText=lines[0].some(c=>isNaN(parseFloat(c.replace(/[R$\s.]/g,'').replace(',','.'))));
+  let headers,dataRows;
+  if(firstHasText){headers=lines[0];dataRows=lines.slice(1);}
+  else{headers=lines[0].map((_,i)=>`Col ${i+1}`);dataRows=lines;}
+  const numRows=dataRows.filter(r=>r.some(c=>{const n=c.replace(/[R$\s.]/g,'').replace(',','.');return !isNaN(parseFloat(n))&&n.length>0;})).slice(0,999);
+  if(!numRows.length){setStatus('taStatus','err','Nenhuma linha numérica.');return;}
+  const maxC=Math.max(...numRows.map(r=>r.length));
+  const normed=numRows.map(r=>{const o=[...r];while(o.length<maxC)o.push('');return o;});
+  taParsed.headers=headers; taParsed.rows=normed;
+  taParsed.selectedCol=autoDetectCol(headers,normed);
+  setStatus('taStatus','ok',`${numRows.length} linhas detectadas.`);
+  renderColChips('taColList',taParsed,'taParsed');
+  renderPreviewTable('taPreview',taParsed);
+  document.getElementById('taColSelector').style.display='block';
+  document.getElementById('taPreviewWrap').style.display='block';
+  document.getElementById('btnImportTa').style.display='flex';
+}
+
+function importTextColumn(){
+  applyColToGiro(taParsed);
+  closeGiroImport();
+}
+
+function autoDetectCol(headers,rows){
+  const scores=headers.map((h,ci)=>{
+    const hl=(h||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    let sc=0;
+    if(/parcela|prestacao|prestação|installment|pmto|pagamento|valor/.test(hl)) sc+=50;
+    if(/total|saldo|juros|amort|mes|mês|data/.test(hl)) sc-=10;
+    const vals=rows.map(r=>r[ci]).filter(Boolean);
+    const nums=vals.filter(v=>{const c=v.replace(/[R$\s.]/g,'').replace(',','.');return !isNaN(parseFloat(c));});
+    sc+=(nums.length/Math.max(vals.length,1))*30;
+    const parsed=nums.map(v=>parseFloat(v.replace(/[R$\s.]/g,'').replace(',','.'))).filter(v=>v>0&&v<1e8);
+    if(parsed.length>1){
+      const mean=parsed.reduce((a,b)=>a+b)/parsed.length;
+      const std=Math.sqrt(parsed.reduce((a,b)=>a+(b-mean)**2,0)/parsed.length);
+      if(mean>0&&std/mean<0.5) sc+=20;
+      if(mean>100&&mean<1e7) sc+=10;
+    }
+    return {ci,sc};
+  });
+  scores.sort((a,b)=>b.sc-a.sc);
+  return scores[0]?.ci??0;
+}
+
+function renderColChips(listId, parsed, parsedVar){
+  const list=document.getElementById(listId); list.innerHTML='';
+  parsed.headers.forEach((h,ci)=>{
+    const chip=document.createElement('div');
+    chip.className='col-chip'+(ci===parsed.selectedCol?' selected':'');
+    chip.textContent=`${ci+1}. ${h||'(sem título)'}`;
+    chip.onclick=()=>{
+      parsed.selectedCol=ci;
+      document.querySelectorAll(`#${listId} .col-chip`).forEach(c=>c.classList.remove('selected'));
+      chip.classList.add('selected');
+      renderPreviewTable(listId==='colList'?'pdfPreview':'taPreview',parsed);
+    };
+    list.appendChild(chip);
+  });
+}
+
+function renderPreviewTable(previewId,parsed){
+  const el=document.getElementById(previewId);
+  const sel=parsed.selectedCol;
+  let h='<table><thead><tr>';
+  parsed.headers.forEach((hdr,ci)=>{ h+=`<th class="${ci===sel?'sel-col':''}">${hdr||ci+1}</th>`; });
+  h+='</tr></thead><tbody>';
+  parsed.rows.slice(0,10).forEach(row=>{
+    h+='<tr>';
+    row.forEach((cell,ci)=>{ h+=`<td class="${ci===sel?'sel-col':''}">${cell}</td>`; });
+    h+='</tr>';
+  });
+  if(parsed.rows.length>10) h+=`<tr><td colspan="${parsed.headers.length}" style="...">… mais ${parsed.rows.length-10} linhas</td></tr>`;
+  h+='</tbody></table>';
+  el.innerHTML=h;
+}
+
+function applyColToGiro(parsed){
+  const ci=parsed.selectedCol;
+  if(ci<0) return;
+  const vals=parsed.rows.map(row=>{
+    const raw=(row[ci]||'').replace(/[R$\s.]/g,'').replace(',','.');
+    return parseFloat(raw)||0;
+  });
+  giroFlow=new Array(N).fill(null);
+  vals.forEach((v,i)=>{ if(i<N) giroFlow[i]=v; });
+  giroLoaded = true;
+  checkResultsVisibility();
+  buildTable();
+}
+
+// ══════════════════════════════════════════════════════════
+// REPORT MODAL + PDF GENERATION
+// ══════════════════════════════════════════════════════════
+function openReportModal(){
+  const cards=[
+    {lbl:'TIR Mensal',      val:document.getElementById('res_tir_m').textContent,     col:'#002F6C'},
+    {lbl:'TIR Anual',       val:document.getElementById('res_tir_a').textContent,     col:'#002F6C'},
+    {lbl:'Capital Total',   val:document.getElementById('res_capital').textContent,   col:'#374151'},
+    {lbl:'Total Pago',      val:document.getElementById('res_total_pago').textContent,col:'#374151'},
+    {lbl:'Total Consórcio', val:document.getElementById('res_cons_total').textContent,col:'#0092D4'},
+    {lbl:'Total Giro',      val:document.getElementById('res_giro_total').textContent,col:'#006B3E'},
+    {lbl:'Despesas Giro',   val:document.getElementById('res_despesas').textContent,  col:'#8B6800'},
+    {lbl:'Custo Total',     val:document.getElementById('res_custo').textContent,     col:'#374151'},
+  ];
+  document.getElementById('rep-preview-cards').innerHTML=cards.map(c=>
+    `<div style="background:var(--white);border:1px solid var(--gray-200);border-radius:var(--r-sm);padding:10px 12px">
+      <div style="font-size:.65rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-500);margin-bottom:4px">${c.lbl}</div>
+      <div style="font-size:.95rem;font-weight:700;color:${c.col}">${c.val}</div>
+    </div>`
+  ).join('');
+  document.getElementById('reportModal').classList.add('open');
+}
+function closeReportModal(){ document.getElementById('reportModal').classList.remove('open'); }
+
+function generatePDF(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+
+  const navy  =[0,47,108];
+  const navyD =[0,31,74];
+  const yellow=[247,199,2];
+  const teal  =[0,146,212];
+  const green =[0,107,62];
+  const white =[255,255,255];
+  const gray9 =[17,24,39];
+  const gray7 =[55,65,81];
+  const gray5 =[107,114,128];
+  const gray2 =[209,213,220];
+  const gray1 =[245,246,248];
+
+  const W=210, M=16;
+  let y=0;
+
+  doc.setFillColor(...navy);
+  doc.rect(0,0,W,36,'F');
+  doc.setFillColor(...yellow);
+  doc.roundedRect(M,7,18,18,3,3,'F');
+  doc.setTextColor(...navy);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.text('TIR',M+9,19,{align:'center'});
+  doc.setTextColor(...white);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(14);
+  doc.text('Simulador TIR — Mix Consórcio + Capital de Giro',M+24,15);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9);
+  doc.setTextColor(200,215,235);
+  const now=new Date();
+  doc.text(`Gerado em ${now.toLocaleDateString('pt-BR')} às ${now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`,M+24,23);
+  doc.setTextColor(...yellow);
+  doc.setFont('helvetica','bold');
+  doc.text('Simulador TIR',W-M,23,{align:'right'});
+  y=44;
+
+  doc.setFillColor(...gray1);
+  doc.roundedRect(M,y,W-2*M,50,3,3,'F');
+  doc.setDrawColor(...gray2);
+  doc.roundedRect(M,y,W-2*M,50,3,3,'S');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...teal);
+  doc.text('PARÂMETROS DA SIMULAÇÃO',M+6,y+8);
+  doc.setFillColor(...teal);
+  doc.rect(M+6,y+10,W-2*M-12,0.5,'F');
+
+  const params=[
+    ['Capital Consórcio', fmt(getVal('cons_capital'))],
+    ['Prazo Consórcio',   rn('cons_meses')+' meses'],
+    ['Parcela (antes)',   fmt(getVal('cons_parc_antes'))],
+    ['Parcela (após)',    fmt(getVal('cons_parc_depois'))],
+    ['Valor do Lance',    fmt(getVal('cons_lance_valor'))],
+    ['Mês do Lance',      'Mês '+rn('cons_lance_mes')],
+    ['Capital de Giro',   fmt(getVal('giro_capital'))],
+    ['Prazo de Giro',     rn('giro_meses')+' meses'],
+    ['Despesas do Giro',  fmt(getVal('giro_despesas'))],
+  ];
+  const cw4=(W-2*M-12)/4;
+  params.forEach((p,i)=>{
+    const col=i%4, row=Math.floor(i/4);
+    const px=M+6+col*cw4, py=y+18+row*13;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...gray5);
+    doc.text(p[0],px,py);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...gray9);
+    doc.text(p[1],px,py+5.5);
+  });
+  y+=58;
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...navy);
+  doc.text('RESULTADOS',M,y+6);
+  doc.setFillColor(...navy);
+  doc.rect(M,y+8,W-2*M,0.6,'F');
+  y+=14;
+
+  const results=[
+    {lbl:'TIR Mensal',      val:document.getElementById('res_tir_m').textContent,      color:navy,  hl:true},
+    {lbl:'TIR Anual',       val:document.getElementById('res_tir_a').textContent,      color:navy,  hl:true},
+    {lbl:'Capital Total',   val:document.getElementById('res_capital').textContent,    color:gray7, hl:false},
+    {lbl:'Total Pago',      val:document.getElementById('res_total_pago').textContent, color:gray7, hl:false},
+    {lbl:'Total Consórcio', val:document.getElementById('res_cons_total').textContent, color:teal,  hl:false},
+    {lbl:'Total Giro',      val:document.getElementById('res_giro_total').textContent, color:green, hl:false},
+    {lbl:'Despesas Giro',   val:document.getElementById('res_despesas').textContent,   color:[139,104,0], hl:false},
+    {lbl:'Custo Total',     val:document.getElementById('res_custo').textContent,      color:gray7, hl:false},
+  ];
+
+  const cw=(W-2*M)/4-2;
+  const rh=22;
+  results.forEach((r,i)=>{
+    const col=i%4, row=Math.floor(i/4);
+    const rx=M+col*(cw+2.67), ry=y+row*(rh+4);
+    doc.setFillColor(r.hl?240:255,r.hl?246:255,r.hl?255:255);
+    doc.setDrawColor(...(r.hl?navy:gray2));
+    doc.roundedRect(rx,ry,cw,rh,2,2,'FD');
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...gray5);
+    doc.text(r.lbl,rx+4,ry+7);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(r.hl?11:9.5);
+    doc.setTextColor(...r.color);
+    doc.text(r.val,rx+4,ry+16);
+  });
+
+  y+=Math.ceil(results.length/4)*(rh+4)+10;
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...navy);
+  doc.text('FLUXO DE PAGAMENTOS',M,y+2);
+  doc.setFillColor(...navy);
+  doc.rect(M,y+4,W-2*M,0.6,'F');
+  y+=10;
+
+  const rows=[];
+  for(let i=0;i<N;i++){
+    const n=i+1;
+    const cInpEl=document.querySelector(`#cc_${i} input`);
+    const gInpEl=document.querySelector(`#gc_${i} input`);
+    const cp=parseCurrency(cInpEl?.value||'0');
+    const gp=parseCurrency(gInpEl?.value||'0');
+    const lanceEl=document.getElementById(`cl_${i}`);
+    const la=lanceEl&&lanceEl.textContent!=='—'?parseCurrency(lanceEl.textContent):0;
+    const de=(i===0)?getVal('giro_despesas'):0;
+    const total=cp+gp+la+de;
+    if(total===0&&i>=Math.max(rn('cons_meses'),rn('giro_meses'))) continue;
+    const dateEl=document.querySelector(`#flow-body tr:nth-child(${i+1}) td:nth-child(2)`);
+    rows.push([
+      String(n),
+      dateEl?dateEl.textContent:'',
+      fmtN(cp),
+      la>0?fmtN(la):'—',
+      fmtN(gp),
+      de>0?fmtN(de):'—',
+      fmtN(total),
+    ]);
+  }
+
+  doc.autoTable({
+    startY:y,
+    head:[['Mês','Data','Parc. Cons.','Lance','Parc. Giro','Despesas','Total']],
+    body:rows,
+    theme:'grid',
+    styles:{font:'helvetica',fontSize:7.5,cellPadding:2.5,textColor:[...gray9],lineColor:[...gray2],lineWidth:0.2},
+    headStyles:{fillColor:[...navy],textColor:[...white],fontSize:7.5,fontStyle:'bold',lineColor:[...navyD],lineWidth:0.3},
+    alternateRowStyles:{fillColor:[...gray1]},
+    columnStyles:{
+      0:{halign:'center',cellWidth:8},
+      1:{halign:'center',cellWidth:14},
+      2:{halign:'right'},
+      3:{halign:'right'},
+      4:{halign:'right'},
+      5:{halign:'right'},
+      6:{halign:'right',fontStyle:'bold'},
+    },
+    margin:{left:M,right:M},
+    didParseCell(data){
+      if(data.section==='body'){
+        if(data.column.index===3&&data.cell.text[0]!=='—'){
+          data.cell.styles.textColor=[139,104,0];
+          data.cell.styles.fontStyle='bold';
+        }
+        if(data.column.index===5&&data.cell.text[0]!=='—'){
+          data.cell.styles.textColor=[139,104,0];
+        }
+        if(data.column.index===6){
+          data.cell.styles.textColor=[...navy];
+          data.cell.styles.fontStyle='bold';
+        }
+      }
+    }
+  });
+
+  const pages=doc.getNumberOfPages();
+  for(let p=1;p<=pages;p++){
+    doc.setPage(p);
+    doc.setFillColor(...gray1);
+    doc.rect(0,287,W,10,'F');
+    doc.setDrawColor(...gray2);
+    doc.line(0,287,W,287);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...gray5);
+    doc.text('Simulador TIR — Consórcio + Capital de Giro',M,293);
+    doc.text(`Pág. ${p}/${pages}`,W-M,293,{align:'right'});
+  }
+
+  doc.save(`TIR_mix_${now.toISOString().slice(0,10)}.pdf`);
+  closeReportModal();
+}
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',()=>{
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('cons_data').value = today;
+  document.getElementById('giro_data').value = today;
+  const dz=document.getElementById('dropZone');
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over')});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault();dz.classList.remove('drag-over');
+    const f=e.dataTransfer.files[0];
+    if(f&&f.type==='application/pdf') handlePdfFile(f);
+    else setStatus('pdfStatus','err','Selecione um arquivo PDF.');
+  });
+  updateN();
+  buildTable();
+});
+</script>
+</body>
+</html>
